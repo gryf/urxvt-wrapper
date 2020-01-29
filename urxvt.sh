@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-TABBED=''
 SIZE=14
 ICON_PATH="${HOME}/GNUstep/Library/Icons"
 ICON="tilda.png"
@@ -9,12 +8,12 @@ FONT_NORMAL="style=Book"
 FONT_BOLD="style=Bold"
 FONT_ITALIC="style=Oblique"
 FONT_BOLDITALIC="style=Bold Oblique"
-FIXED_NORMAL="-Misc-Fixed-Medium-R-Normal-*-*-140-*-*-C-*-ISO10646-1"
-FIXED_ITALIC="-Misc-Fixed-Medium-O-Normal-*-*-140-*-*-C-*-ISO10646-1"
-FIXED_BOLD="-Misc-Fixed-Bold-R-Normal-*-*-140-*-*-C-*-ISO10646-1"
+FIXED_NORMAL="-Misc-Fixed-Medium-R-Normal-*-15-*-*-*-C-*-ISO10646-1"
+FIXED_ITALIC="-Misc-Fixed-Medium-O-Normal-*-15-*-*-*-C-*-ISO10646-1"
+FIXED_BOLD="-Misc-Fixed-Bold-R-Normal-*-15-*-*-*-C-*-ISO10646-1"
 XFT=true
 EXEC=''
-PERLEXT="url-select,keyboard-select,font,color-themes"
+PERLEXT="url-select,keyboard-select,font-size,color-themes"
 
 
 
