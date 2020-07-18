@@ -24,7 +24,7 @@ function usage {
     echo
     echo "  -i icon          select icon file from ${ICON_PATH},"
     echo "                   default tilda.png"
-    echo "  -t               activate tabbed extension"
+    echo "  -t               activate tabbedalt extension"
     echo "  -s size          set font size, default 14"
     echo "  -f               use fixed misc font instead of DejaVu"
     echo "  -e               pass exec to the urxvt"
@@ -40,7 +40,7 @@ do
             exit 0
             ;;
         t)
-            PERLEXT="tabbed,${PERLEXT}"
+            PERLEXT="tabbedalt,${PERLEXT}"
             ;;
         i)
             ICON=${OPTARG}
