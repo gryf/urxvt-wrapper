@@ -32,8 +32,7 @@ function usage {
     echo "  -h               this help"
 }
 
-while getopts ":i:hfs:te:n" option
-do
+while getopts ":i:hfs:te:n" option; do
     case $option in
         h)
             usage
@@ -72,7 +71,7 @@ then
             -fb "xft:${FONT_NAME}:${FONT_BOLD}:pixelsize=${SIZE}" \
             -fbi "xft:${FONT_NAME}:${FONT_BOLDITALIC}:pixelsize=${SIZE}" \
             -fi "xft:${FONT_NAME}:${FONT_ITALIC}:pixelsize=${SIZE}" \
-            -icon "${ICON_PATH}/${ICON}" -e ${EXEC}
+            -icon "${ICON_PATH}/${ICON}" -e "${EXEC}"
     else
         urxvt -pe "${PERLEXT}" \
             -fn "xft:${FONT_NAME}:${FONT_NORMAL}:pixelsize=${SIZE}" \
@@ -87,7 +86,7 @@ else
             -fn "${FIXED_NORMAL}" \
             -fb "${FIXED_BOLD}" \
             -fi "${FIXED_ITALIC}" \
-            -icon "${ICON_PATH}/${ICON}" -e ${EXEC}
+            -icon "${ICON_PATH}/${ICON}" -e "${EXEC}"
     else
         urxvt -pe "${PERLEXT}" \
             -fn "${FIXED_NORMAL}" \
