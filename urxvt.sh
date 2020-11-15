@@ -19,6 +19,13 @@ EXEC=''
 PERLEXT="url-select,keyboard-select,font-size,color-themes"
 
 
+function rxvt {
+    urxvtc "$@"
+    if [ $? -eq 2 ]; then
+        urxvtd -q -o -f
+        urxvtc "$@"
+    fi
+}
 
 function usage {
     echo "Usage: $(basename "${0}") [options]"
@@ -68,13 +75,13 @@ done
 
 args=("-pe" "${PERLEXT}" "-icon" "${ICON_PATH}/${ICON}")
 if ${XFT}; then
-    args+=("-fn" "xft:${FONT_NAME}:${FONT_NORMAL}:pixelsize=${SIZE}" 
-    "-fb" "xft:${FONT_NAME}:${FONT_BOLD}:pixelsize=${SIZE}" 
-    "-fbi" "xft:${FONT_NAME}:${FONT_BOLDITALIC}:pixelsize=${SIZE}" 
+    args+=("-fn" "xft:${FONT_NAME}:${FONT_NORMAL}:pixelsize=${SIZE}"
+    "-fb" "xft:${FONT_NAME}:${FONT_BOLD}:pixelsize=${SIZE}"
+    "-fbi" "xft:${FONT_NAME}:${FONT_BOLDITALIC}:pixelsize=${SIZE}"
     "-fi" "xft:${FONT_NAME}:${FONT_ITALIC}:pixelsize=${SIZE}")
 else
-    args+=("-fn" "${FIXED_NORMAL}" 
-    "-fb" "${FIXED_BOLD}" 
+    args+=("-fn" "${FIXED_NORMAL}"
+    "-fb" "${FIXED_BOLD}"
     "-fi" "${FIXED_ITALIC}")
 fi
 
@@ -82,4 +89,4 @@ if [ -n "${EXEC}" ]; then
     args+=("-e" "${EXEC}")
 fi
 
-urxvt "${args[@]}"
+rxvt "${args[@]}"
