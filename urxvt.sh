@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# urxvt.sh - simplify urxvt commandline execution.
+# v1.1
+
 SIZE=14
 ICON_PATH="${HOME}/GNUstep/Library/Icons"
 ICON="tilda.png"
@@ -63,35 +66,20 @@ while getopts ":i:hfs:te:n" option; do
     esac
 done
 
-if ${XFT}
-then
-    if [ -n "${EXEC}" ]; then
-        urxvt -pe "${PERLEXT}" \
-            -fn "xft:${FONT_NAME}:${FONT_NORMAL}:pixelsize=${SIZE}" \
-            -fb "xft:${FONT_NAME}:${FONT_BOLD}:pixelsize=${SIZE}" \
-            -fbi "xft:${FONT_NAME}:${FONT_BOLDITALIC}:pixelsize=${SIZE}" \
-            -fi "xft:${FONT_NAME}:${FONT_ITALIC}:pixelsize=${SIZE}" \
-            -icon "${ICON_PATH}/${ICON}" -e "${EXEC}"
-    else
-        urxvt -pe "${PERLEXT}" \
-            -fn "xft:${FONT_NAME}:${FONT_NORMAL}:pixelsize=${SIZE}" \
-            -fb "xft:${FONT_NAME}:${FONT_BOLD}:pixelsize=${SIZE}" \
-            -fbi "xft:${FONT_NAME}:${FONT_BOLDITALIC}:pixelsize=${SIZE}" \
-            -fi "xft:${FONT_NAME}:${FONT_ITALIC}:pixelsize=${SIZE}" \
-            -icon "${ICON_PATH}/${ICON}"
-    fi
+args=("-pe" "${PERLEXT}" "-icon" "${ICON_PATH}/${ICON}")
+if ${XFT}; then
+    args+=("-fn" "xft:${FONT_NAME}:${FONT_NORMAL}:pixelsize=${SIZE}" 
+    "-fb" "xft:${FONT_NAME}:${FONT_BOLD}:pixelsize=${SIZE}" 
+    "-fbi" "xft:${FONT_NAME}:${FONT_BOLDITALIC}:pixelsize=${SIZE}" 
+    "-fi" "xft:${FONT_NAME}:${FONT_ITALIC}:pixelsize=${SIZE}")
 else
-    if [ -n "${EXEC}" ]; then
-        urxvt -pe "${PERLEXT}" \
-            -fn "${FIXED_NORMAL}" \
-            -fb "${FIXED_BOLD}" \
-            -fi "${FIXED_ITALIC}" \
-            -icon "${ICON_PATH}/${ICON}" -e "${EXEC}"
-    else
-        urxvt -pe "${PERLEXT}" \
-            -fn "${FIXED_NORMAL}" \
-            -fb "${FIXED_BOLD}" \
-            -fi "${FIXED_ITALIC}" \
-            -icon "${ICON_PATH}/${ICON}"
-    fi
+    args+=("-fn" "${FIXED_NORMAL}" 
+    "-fb" "${FIXED_BOLD}" 
+    "-fi" "${FIXED_ITALIC}")
 fi
+
+if [ -n "${EXEC}" ]; then
+    args+=("-e" "${EXEC}")
+fi
+
+urxvt "${args[@]}"
