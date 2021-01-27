@@ -1,23 +1,33 @@
 #!/usr/bin/env bash
 
 # urxvt.sh - simplify urxvt commandline execution.
-# v1.1
+# v1.2
 
 SIZE=14
+FIXED_SIZE=16
 ICON_PATH="${HOME}/GNUstep/Library/Icons"
 ICON="tilda.png"
-FONT_NAME="DejaVuSansMono Nerd Font Mono"
-FONT_NORMAL="style=Book"
+FONT_BOOK="style=Book"
+FONT_REGULAR="style=Regular"
+FONT_MEDIUM="style=Medium"
 FONT_BOLD="style=Bold"
-FONT_ITALIC="style=Oblique"
-FONT_BOLDITALIC="style=Bold Oblique"
-FIXED_NORMAL="-Misc-Fixed-Medium-R-Normal-*-15-*-*-*-C-*-ISO10646-1"
-FIXED_ITALIC="-Misc-Fixed-Medium-O-Normal-*-15-*-*-*-C-*-ISO10646-1"
-FIXED_BOLD="-Misc-Fixed-Bold-R-Normal-*-15-*-*-*-C-*-ISO10646-1"
+
+# FIXED_NORMAL="-Misc-Fixed-Medium-R-Normal-*-15-*-*-*-C-*-ISO10646-1"
+# FIXED_ITALIC="-Misc-Fixed-Medium-O-Normal-*-15-*-*-*-C-*-ISO10646-1"
+# FIXED_BOLD="-Misc-Fixed-Bold-R-Normal-*-15-*-*-*-C-*-ISO10646-1"
+
+# Regular fonts.
+DEJAVU="xft:DejaVuSansMono Nerd Font Mono:_FONT_STYLE_:pixelsize=_SIZE_"
+FIXED="xft:Misc Fixed:_FONT_STYLE_:pixelsize=_FIXEDSIZE_:antialias=false"
+# Fonts, that provides with symbols, icons, emoji (besides those in Nerd Font)
+SYMBOLA="xft:Symbola:_FONT_STYLE_:pixelsize=_SIZE_"
+UNIFONT="xft:Unifont Upper:_FONT_STYLE_:pixelsize=_SIZE_"
+
 XFT=true
 EXEC=''
 PERLEXT="url-select,keyboard-select,font-size,color-themes"
 
+# TODO: do we need italic/bolditalic?
 
 function rxvt {
     urxvtc "$@"
@@ -25,6 +35,10 @@ function rxvt {
         urxvtd -q -o -f
         urxvtc "$@"
     fi
+}
+
+function join_by {
+    local IFS="$1"; shift; echo "$*";
 }
 
 function usage {
@@ -36,7 +50,8 @@ function usage {
     echo "                   default tilda.png"
     echo "  -t               activate tabbedalt extension"
     echo "  -s size          set font size, default 14"
-    echo "  -f               use fixed misc font instead of DejaVu"
+    echo "  -f               use fixed misc font as a main font instead of"
+    echo "                   DejaVu"
     echo "  -e               pass exec to the urxvt"
     echo "  -n               no perl extensions"
     echo "  -h               this help"
@@ -56,6 +71,7 @@ while getopts ":i:hfs:te:n" option; do
             ;;
         s)
             SIZE=${OPTARG}
+            FIXED_SIZE=${OPTARG}
             ;;
         f)
             XFT=false
@@ -73,17 +89,62 @@ while getopts ":i:hfs:te:n" option; do
     esac
 done
 
-args=("-pe" "${PERLEXT}" "-icon" "${ICON_PATH}/${ICON}")
 if ${XFT}; then
-    args+=("-fn" "xft:${FONT_NAME}:${FONT_NORMAL}:pixelsize=${SIZE}"
-    "-fb" "xft:${FONT_NAME}:${FONT_BOLD}:pixelsize=${SIZE}"
-    "-fbi" "xft:${FONT_NAME}:${FONT_BOLDITALIC}:pixelsize=${SIZE}"
-    "-fi" "xft:${FONT_NAME}:${FONT_ITALIC}:pixelsize=${SIZE}")
+    FONTS="${DEJAVU/_FONT_STYLE_/style=Book}"
+    FONTS="${FONTS/_SIZE_/$SIZE}"
+    FONTS="${FONTS},${SYMBOLA/_FONT_STYLE_/style=Regular}"
+    FONTS="${FONTS/_SIZE_/$SIZE}"
+    FONTS="${FONTS},${UNIFONT/_FONT_STYLE_/style=Medium}"
+    FONTS="${FONTS/_SIZE_/$SIZE},${FIXED/_FONT_STYLE_/style=Regular}"
+    FONTS="${FONTS/_FIXEDSIZE_/$FIXED_SIZE}"
+
+    FONTSB="${DEJAVU/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB/_SIZE_/$SIZE}"
+    FONTSB="${FONTSB},${SYMBOLA/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB/_SIZE_/$SIZE}"
+    FONTSB="${FONTSB},${UNIFONT/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB/_SIZE_/$SIZE},${FIXED/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB/_FIXEDSIZE_/$FIXED_SIZE}"
 else
-    args+=("-fn" "${FIXED_NORMAL}"
-    "-fb" "${FIXED_BOLD}"
-    "-fi" "${FIXED_ITALIC}")
+    FONTS="${FIXED/_FONT_STYLE_/style=Regular}"
+    FONTS="${FONTS/_FIXEDSIZE_/$FIXED_SIZE}"
+    FONTS="${FONTS},${DEJAVU/_FONT_STYLE_/style=Book}"
+    FONTS="${FONTS/_SIZE_/$SIZE}"
+    FONTS="${FONTS},${SYMBOLA/_FONT_STYLE_/style=Regular}"
+    FONTS="${FONTS/_SIZE_/$SIZE}"
+    FONTS="${FONTS},${UNIFONT/_FONT_STYLE_/style=Medium}"
+    FONTS="${FONTS/_SIZE_/$SIZE}"
+
+    FONTSB="${FIXED/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB/_FIXEDSIZE_/$FIXED_SIZE}"
+    FONTSB="${FONTSB},${DEJAVU/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB/_SIZE_/$SIZE}"
+    FONTSB="${FONTSB},${SYMBOLA/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB/_SIZE_/$SIZE}"
+    FONTSB="${FONTSB},${UNIFONT/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB/_SIZE_/$SIZE}"
 fi
+
+# DEJAVU="xft:DejaVuSansMono Nerd Font Mono:${FONT_BOOK}:${SIZE},"`
+    # `"xft:Symbola:${FONT_REGULAR}:${SIZE},"`
+    # `"xft:Unifont Upper:${FONT_MEDIUM}:${SIZE},"`
+    # `"xft:Misc Fixed:${FONT_REGULAR}:${FIXED_SIZE}:antialias=false"
+
+# DEJAVU_BOLD="xft:DejaVuSansMono Nerd Font Mono:${FONT_BOLD}:${SIZE},"`
+    # `"xft:Symbola:${FONT_BOLD}:${SIZE},"`
+    # `"xft:Unifont Upper:${FONT_BOLD}:${SIZE},"`
+    # `"xft:Misc Fixed:${FONT_BOLD}:${FIXED_SIZE}:antialias=false"
+
+# FIXED="xft:Misc Fixed:${FONT_REGULAR}:${FIXED_SIZE}:antialias=false,"`
+    # `"xft:DejaVuSansMono Nerd Font Mono:${FONT_BOOK}:${SIZE},"`
+    # `"xft:Symbola:${FONT_REGULAR}:${SIZE},"`
+    # `"xft:Unifont Upper:${FONT_MEDIUM}:${SIZE}"
+
+# FIXED_BOLD="xft:Misc Fixed:${FONT_BOLD}:${FIXED_SIZE}:antialias=false,"`
+    # `"xft:DejaVuSansMono Nerd Font Mono:${FONT_BOLD}:${SIZE},"`
+
+args=("-pe" "${PERLEXT}" "-icon" "${ICON_PATH}/${ICON}")
+args+=("-fn" "${FONTS}" "-fb" "${FONTSB}" )
 
 if [ -n "${EXEC}" ]; then
     args+=("-e" "${EXEC}")
