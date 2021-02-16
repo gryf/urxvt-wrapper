@@ -21,6 +21,7 @@ FIXED="xft:Misc Fixed:_FONT_STYLE_:pixelsize=_FIXEDSIZE_:antialias=false"
 # Fonts, that provides with symbols, icons, emoji (besides those in Nerd Font)
 SYMBOLA="xft:Symbola:_FONT_STYLE_:pixelsize=_SIZE_"
 UNIFONT="xft:Unifont Upper:_FONT_STYLE_:pixelsize=_SIZE_"
+DEJAVUSANS="xft:DejaVu Sans:style=_FONT_STYLE_:pixelsize=_SIZE_"
 
 XFT=true
 EXEC=''
@@ -95,6 +96,8 @@ if ${XFT}; then
     FONTS="${FONTS/_SIZE_/$SIZE}"
     FONTS="${FONTS},${UNIFONT/_FONT_STYLE_/style=Medium}"
     FONTS="${FONTS/_SIZE_/$SIZE},${FIXED/_FONT_STYLE_/style=Regular}"
+    FONTS="${FONTS},${DEJAVUSANS/_FONT_STYLE_/style=Book}"
+    FONTS="${FONTS/_SIZE_/$SIZE}"
 
     FONTSB="${DEJAVU/_FONT_STYLE_/style=Bold}"
     FONTSB="${FONTSB/_SIZE_/$SIZE}"
@@ -102,6 +105,8 @@ if ${XFT}; then
     FONTSB="${FONTSB/_SIZE_/$SIZE}"
     FONTSB="${FONTSB},${UNIFONT/_FONT_STYLE_/style=Bold}"
     FONTSB="${FONTSB/_SIZE_/$SIZE},${FIXED/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB},${DEJAVUSANS/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB/_SIZE_/$SIZE}"
 else
     FONTS="${FIXED/_FONT_STYLE_/style=Regular}"
     FONTS="${FONTS/_FIXEDSIZE_/$FIXED_SIZE}"
@@ -111,6 +116,8 @@ else
     FONTS="${FONTS/_SIZE_/$SIZE}"
     FONTS="${FONTS},${UNIFONT/_FONT_STYLE_/style=Medium}"
     FONTS="${FONTS/_SIZE_/$SIZE}"
+    FONTS="${FONTS},${DEJAVUSANS/_FONT_STYLE_/style=Book}"
+    FONTS="${FONTS/_SIZE_/$SIZE}"
 
     FONTSB="${FIXED/_FONT_STYLE_/style=Bold}"
     FONTSB="${FONTSB/_FIXEDSIZE_/$FIXED_SIZE}"
@@ -119,6 +126,8 @@ else
     FONTSB="${FONTSB},${SYMBOLA/_FONT_STYLE_/style=Bold}"
     FONTSB="${FONTSB/_SIZE_/$SIZE}"
     FONTSB="${FONTSB},${UNIFONT/_FONT_STYLE_/style=Bold}"
+    FONTSB="${FONTSB/_SIZE_/$SIZE}"
+    FONTSB="${FONTSB},${DEJAVUSANS/_FONT_STYLE_/style=Bold}"
     FONTSB="${FONTSB/_SIZE_/$SIZE}"
 fi
 
