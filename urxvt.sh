@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 # urxvt.sh - simplify urxvt commandline execution.
-# v1.2
 
 SIZE=14
 FIXED_SIZE=16
@@ -96,7 +95,6 @@ if ${XFT}; then
     FONTS="${FONTS/_SIZE_/$SIZE}"
     FONTS="${FONTS},${UNIFONT/_FONT_STYLE_/style=Medium}"
     FONTS="${FONTS/_SIZE_/$SIZE},${FIXED/_FONT_STYLE_/style=Regular}"
-    FONTS="${FONTS/_FIXEDSIZE_/$FIXED_SIZE}"
 
     FONTSB="${DEJAVU/_FONT_STYLE_/style=Bold}"
     FONTSB="${FONTSB/_SIZE_/$SIZE}"
@@ -104,7 +102,6 @@ if ${XFT}; then
     FONTSB="${FONTSB/_SIZE_/$SIZE}"
     FONTSB="${FONTSB},${UNIFONT/_FONT_STYLE_/style=Bold}"
     FONTSB="${FONTSB/_SIZE_/$SIZE},${FIXED/_FONT_STYLE_/style=Bold}"
-    FONTSB="${FONTSB/_FIXEDSIZE_/$FIXED_SIZE}"
 else
     FONTS="${FIXED/_FONT_STYLE_/style=Regular}"
     FONTS="${FONTS/_FIXEDSIZE_/$FIXED_SIZE}"
@@ -124,24 +121,6 @@ else
     FONTSB="${FONTSB},${UNIFONT/_FONT_STYLE_/style=Bold}"
     FONTSB="${FONTSB/_SIZE_/$SIZE}"
 fi
-
-# DEJAVU="xft:DejaVuSansMono Nerd Font Mono:${FONT_BOOK}:${SIZE},"`
-    # `"xft:Symbola:${FONT_REGULAR}:${SIZE},"`
-    # `"xft:Unifont Upper:${FONT_MEDIUM}:${SIZE},"`
-    # `"xft:Misc Fixed:${FONT_REGULAR}:${FIXED_SIZE}:antialias=false"
-
-# DEJAVU_BOLD="xft:DejaVuSansMono Nerd Font Mono:${FONT_BOLD}:${SIZE},"`
-    # `"xft:Symbola:${FONT_BOLD}:${SIZE},"`
-    # `"xft:Unifont Upper:${FONT_BOLD}:${SIZE},"`
-    # `"xft:Misc Fixed:${FONT_BOLD}:${FIXED_SIZE}:antialias=false"
-
-# FIXED="xft:Misc Fixed:${FONT_REGULAR}:${FIXED_SIZE}:antialias=false,"`
-    # `"xft:DejaVuSansMono Nerd Font Mono:${FONT_BOOK}:${SIZE},"`
-    # `"xft:Symbola:${FONT_REGULAR}:${SIZE},"`
-    # `"xft:Unifont Upper:${FONT_MEDIUM}:${SIZE}"
-
-# FIXED_BOLD="xft:Misc Fixed:${FONT_BOLD}:${FIXED_SIZE}:antialias=false,"`
-    # `"xft:DejaVuSansMono Nerd Font Mono:${FONT_BOLD}:${SIZE},"`
 
 args=("-pe" "${PERLEXT}" "-icon" "${ICON_PATH}/${ICON}")
 args+=("-fn" "${FONTS}" "-fb" "${FONTSB}" )
