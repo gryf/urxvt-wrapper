@@ -18,15 +18,30 @@ SIZE = os.environ.get('URXVT_SIZE', 14)
 FIXED_SIZE = os.environ.get('URXVT_FIXED_SIZE', 16)
 ICON = os.environ.get('URXVT_ICON', 'tilda.png')
 ICON_PATH = os.environ.get('URXVT_ICON_PATH',
-                           os.path.expanduser('~/GNUstep/Library/Icons'))
-DEFAULT_TTF = os.environ.get('URXVT_TTF', 'DejaVuSansMono Nerd Font Mono')
+                           os.path.expanduser('~/.urxvt/icons'))
+DEFAULT_FONT = os.environ.get('URXVT_TTF', 'DejaVuSansMono Nerd Font Mono')
 DEFAULT_BITMAP = os.environ.get('URXVT_BMP', 'Misc Fixed')
+PERLEXT = os.environ.get('URXVT_PERL_EXT',
+                         "url-select,keyboard-select,font-size,color-themes")
 
 # Arbitrary added fonts, that provides symbols, icons, emoji (besides those in
 # Nerd Font)
 _ADDITIONAL_FONTS = ['Symbola', 'Unifont Upper', 'DejaVu Sans']
-_REGULAR = ['regular', 'normal', 'book', 'medium', 'bold']
+_REGULAR = ['regular', 'normal', 'book', 'medium']
 _XFT_TEMPLATE = 'xft:%s:style=%s:pixelsize=%d'
+
+
+def _parse_style(styles):
+    for reg_style in _REGULAR:
+        if reg_style in ''.join(styles).lower():
+            for style in styles:
+                if style.lower() == reg_style:
+                    return style
+
+    if 'bold' in ''.join(styles).lower():
+        for style in styles:
+            if style.lower() == 'bold':
+                return style
 
 
 def _get_all_suitable_fonts():
@@ -45,57 +60,63 @@ def _get_all_suitable_fonts():
 
     Return a dictionary of styles associated to the font name, i.e.:
 
-        {font_name1: [style],
-         font_name2: [style1, style2],
-         font_name3: [style1, style2],
-         font_name4: [style3, style4]}
+        {font_name1: (style),
+         font_name2: (style1, style2),
+         font_name3: (style1, style2),
+         font_name4: (style3, style4)}
 
     """
-    fonts = collections.defaultdict(list)
+    regular = {}
+    bold = {}
+
     out = subprocess.check_output(['fc-list']).decode('utf-8')
+
     for line in out.split('\n'):
-        if line and ': ' in line and ':style=' in line:
-            line = line.split(': ')[1]
-            font_names = line.split(':')[0].split(',')
-            styles = line.split(':style=')[1].split(',')
-            for name in font_names:
-                for style in styles:
-                    if style.lower().strip() in _REGULAR:
-                        fonts[name.strip()].append(style.strip())
+        if not line:
+            continue
 
-    out = {}
-    for key, val in fonts.items():
-        out[key] = list(set(val))
+        if ': ' not in line:
+            continue
 
-    return out
+        if ':style=' not in line:
+            continue
+
+        line = line.split(': ')[1]
+        font_names = [n.strip() for n in line.split(':')[0].split(',')]
+        styles = [s.strip() for s in line.split(':style=')[1].split(',')]
+
+        style = _parse_style(styles)
+        if not style:
+            continue
+
+        for name in font_names:
+            if style.lower() == 'bold' and not bold.get(name):
+                bold[name] = style
+            elif style.lower() != 'bold' and not regular.get(name):
+                regular[name] = style
+
+    return {'regular': regular, 'bold': bold}
 
 
 _AVAILABLE_FONTS = _get_all_suitable_fonts()
 
 
 def _get_style(name, bold=False):
+    key = 'bold' if bold else 'regular'
     try:
-        styles = _AVAILABLE_FONTS[name]
+        return _AVAILABLE_FONTS[key][name]
     except KeyError:
         print(f'There is no matching font for name "{name}".')
-        sys.exit(1)
-
-    for style in styles:
-        if bold and style.lower() == 'bold':
-            return style
-
-        if style.lower() in _REGULAR:
-            return style
+        return None
 
 
-def _get_font_list(ff_list, bold=False, bmp_first=False):
+def _get_font_list(ff_list, size, bold=False):
     fonts = []
-
     for face in ff_list:
-        fonts.append(_XFT_TEMPLATE % (face, _get_style(face), SIZE))
-    if bmp_first:
-        fonts.insert(0, _XFT_TEMPLATE %
-                     (DEFAULT_BITMAP, _get_style(DEFAULT_BITMAP), FIXED_SIZE))
+        style = _get_style(face, bold)
+        if not style:
+            continue
+        fonts.append(_XFT_TEMPLATE % (face, _get_style(face, bold), size))
     return ','.join(fonts)
 
 
