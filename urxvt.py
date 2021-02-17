@@ -206,11 +206,45 @@ def main():
 
     args = parser.parse_args()
 
+    command = ['urxvt']
+    command.extend(['-icon', os.path.join(os.path.expanduser(ICON_PATH),
+                                          args.icon)])
+
+    global LOG
+    log = Logger(__name__)
+    log.set_verbose(args.verbose, args.quiet)
+    LOG = log()
+
+    if not args.no_perl:
+        command.append('-pe')
+        if args.tabbedalt:
+            command.append('tabbedalt,' + PERLEXT)
+        else:
+            command.append(PERLEXT)
+
+    size = args.size
     font_faces = _ADDITIONAL_FONTS[:]
-    font_faces.insert(0, DEFAULT_TTF)
-    regular = _get_font_list(font_faces)
-    print(regular)
-    subprocess.run(['urxvt', '-fn', regular])
+    if ',' in args.default_font:
+        f_f = [f.strip() for f in args.default_font.split(',')]
+        f_f.extend(font_faces)
+        font_faces = f_f
+    else:
+        font_faces.insert(0, args.default_font)
+
+    if args.bitmap:
+        font_faces.insert(0, DEFAULT_BITMAP)
+
+    # __import__('ipdb').set_trace()
+    fn = ['-fn', _get_font_list(font_faces, size)]
+    print(fn)
+    fb = ['-fb', _get_font_list(font_faces, size, True)]
+    print(fn)
+    print(fb)
+    command.extend(fn)
+    command.extend(fb)
+
+    LOG.info('%s', command)
+    subprocess.run(command)
 
 
 if __name__ == '__main__':
