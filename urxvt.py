@@ -74,104 +74,233 @@ class Logger:
 
 LOG = Logger(__name__)()
 
-# Arbitrary added fonts, that provides symbols, icons, emoji (besides those in
-# Nerd Font)
-_ADDITIONAL_FONTS = ['Symbola', 'Unifont Upper', 'DejaVu Sans']
-_REGULAR = ['regular', 'normal', 'book', 'medium']
-_XFT_TEMPLATE = 'xft:%s:style=%s:pixelsize=%d'
 
+class Font:
+    """
+    Represents font object, which as it repr will be a string, like
+    xft:font name:style=somestyle:pixelsize=12
 
-def _parse_style(styles):
-    for reg_style in _REGULAR:
-        if reg_style in ''.join(styles).lower():
+    It might be seen in two variants: regular and bold.
+
+    """
+
+    XFT_TEMPLATE = 'xft:%s:style=%s:pixelsize=%d'
+
+    _REGULAR = ['regular', 'normal', 'book', 'medium']
+    _BOLD = ['bold']
+    _AVAILABLE_FONTS = {}
+
+    def __init__(self, name, size):
+        self.size = size
+        self.name = name
+        self._regular = None
+        self._bold = None
+
+        self._get_all_suitable_fonts()
+
+    @property
+    def bold(self):
+        """
+        Return full string font to use for xft definition for urxvt, i.e.
+        xft:font name:style=Bold:pixelsize=20
+
+        It may happen, that a font doesn't provide bold face. Function will
+        than return empty string.
+        """
+        if self._bold is not None:
+            return self._bold
+
+        style = Font._AVAILABLE_FONTS['bold'].get(self.name)
+        if not style:
+            LOG.warning(f'Bold style not found for {self.name}')
+            self._bold = ''
+        else:
+            self._bold = Font.XFT_TEMPLATE % (self.name, style, self.size)
+
+        return self._bold
+
+    @property
+    def regular(self):
+        """
+        Return full string font to use for xft definition for urxvt, i.e.
+        xft:font name:style=Regular:pixelsize=20
+
+        Font style depends on the particular font, and can be one of case
+        insensitive: regular, normal, book, medium.
+
+        Technicly, medium style should be semi-bold or bold, but there is at
+        least one font face which treats medium style as regular one.
+        """
+        if self._regular is not None:
+            return self._regular
+
+        style = Font._AVAILABLE_FONTS['regular'].get(self.name)
+        if not style:
+            LOG.warning(f'Regular style not found for {self.name}')
+            self._regular = ''
+        else:
+            self._regular = Font.XFT_TEMPLATE % (self.name, style, self.size)
+
+        return self._regular
+
+    def _get_all_suitable_fonts(self):
+        """
+        Scan all available in the system fonts, where every line have format:
+
+        font_filename: font_name1[,font_name2,…]:style=style1[,style2,…]
+
+        Font can have several names and several styles. Styles can be either
+        single defined style or comma separated list of aliases or
+        internationalized names for style, i.e.:
+
+            filename1: font_name1:style=style
+            filename2: font_name2,font_name3:style=style1,style2
+            filename3: font_name4:style=style3,style4
+
+        Return a dictionary of styles associated to the font name, i.e.:
+
+            {font_name1: (style),
+             font_name2: (style1, style2),
+             font_name3: (style1, style2),
+             font_name4: (style3, style4)}
+
+        """
+        if Font._AVAILABLE_FONTS:
+            return
+
+        regular = {}
+        bold = {}
+
+        out = subprocess.check_output(['fc-list']).decode('utf-8')
+        out = sorted(out.split('\n'))  # let's have it in order
+
+        for line in out:
+            if not line:
+                continue
+
+            if ': ' not in line:
+                continue
+
+            if ':style=' not in line:
+                continue
+
+            line = line.split(': ')[1]
+            font_names = [n.strip() for n in line.split(':')[0].split(',')]
+            styles = [s.strip() for s in line.split(':style=')[1].split(',')]
+
+            style = self._parse_style(styles)
+            if not style:
+                LOG.debug('No suitable styles found for font in line: %s',
+                          line)
+                continue
+
+            for name in font_names:
+                if style.lower() == 'bold' and not bold.get(name):
+                    LOG.info('Adding bold font for name: %s', name)
+                    bold[name] = style
+                elif style.lower() != 'bold' and not regular.get(name):
+                    LOG.info('Adding regular font for name: %s', name)
+                    regular[name] = style
+                else:
+                    LOG.debug('Font %s probably already exists in dict', name)
+
+        Font._AVAILABLE_FONTS = {'regular': regular, 'bold': bold}
+
+    def _parse_style(self, styles):
+        for reg_style in Font._REGULAR:
+            if reg_style in ''.join(styles).lower():
+                for style in styles:
+                    if style.lower() == reg_style:
+                        return style
+
+        if 'bold' in ''.join(styles).lower():
             for style in styles:
-                if style.lower() == reg_style:
+                if style.lower() == 'bold':
                     return style
 
-    if 'bold' in ''.join(styles).lower():
-        for style in styles:
-            if style.lower() == 'bold':
-                return style
 
-
-def _get_all_suitable_fonts():
+class Urxvt:
     """
-    Scan all available in the system fonts, where every line have format:
-
-    font_filename: font_name1[,font_name2,…]:style=style1[,style2,…]
-
-    Font can have several names and several styles. Styles can be either
-    single defined style or comma separated list of aliases or
-    internationalized names for style, i.e.:
-
-        filename1: font_name1:style=style
-        filename2: font_name2,font_name3:style=style1,style2
-        filename3: font_name4:style=style3,style4
-
-    Return a dictionary of styles associated to the font name, i.e.:
-
-        {font_name1: (style),
-         font_name2: (style1, style2),
-         font_name3: (style1, style2),
-         font_name4: (style3, style4)}
-
+    Runner for the urxvt
     """
-    regular = {}
-    bold = {}
+    # Arbitrary added fonts, that provides symbols, icons, emoji (besides
+    # those in defualt font)
+    _ADDITIONAL_FONTS = ['Symbola', 'Unifont Upper', 'DejaVu Sans']
 
-    out = subprocess.check_output(['fc-list']).decode('utf-8')
+    def __init__(self, args):
+        self.size = args.size
+        self.icon = args.icon
+        self.fonts = None
+        self.perl_extensions = None
 
-    for line in out.split('\n'):
-        if not line:
-            continue
+        self._bitmap = args.bitmap
+        self._icon_path = ICON_PATH
+        self._exec = args.execute
 
-        if ': ' not in line:
-            continue
+        self._setup(args)
+        self._validate()
 
-        if ':style=' not in line:
-            continue
+    def run(self):
+        args = self._make_command_args()
 
-        line = line.split(': ')[1]
-        font_names = [n.strip() for n in line.split(':')[0].split(',')]
-        styles = [s.strip() for s in line.split(':style=')[1].split(',')]
+        LOG.info('%s', args)
+        # subprocess.run(command)
+        # LOG.info('%s', command)
 
-        style = _parse_style(styles)
-        if not style:
-            LOG.debug('No suitable styles found for font in line: %s', line)
-            continue
+    def _setup(self, args):
+        # it could be a list or a single font, it will be combined with
+        # additional fonts
+        self.fonts = self._parse_fonts(args.default_font)
 
-        for name in font_names:
-            if style.lower() == 'bold' and not bold.get(name):
-                bold[name] = style
-            elif style.lower() != 'bold' and not regular.get(name):
-                regular[name] = style
-            else:
-                LOG.debug('Font %s probably already exists in dict', name)
+        if not args.no_perl:
+            self.perl_extensions = PERLEXT
+            if args.tabbedalt:
+                self.perl_extensions = 'tabbedalt,' + PERLEXT
 
-    return {'regular': regular, 'bold': bold}
+    def _validate(self):
+        # vaildate fonts
+        for font in self.fonts:
+            if not any((font.regular, font.bold)):
+                LOG.error('Font %s seems to be unusable or nonexistent.',
+                          font.name)
 
+    def _make_command_args(self):
+        args = []
 
-_AVAILABLE_FONTS = _get_all_suitable_fonts()
+        if self.perl_extensions:
+            args.extend(['-pe', self.perl_extensions])
 
+        args.extend(['-fn',
+                     ','.join([f.regular for f in self.fonts if f.regular])])
+        args.extend(['-fb', ','.join([f.bold for f in self.fonts if f.bold])])
+        args.extend(['-icon', os.path.join(ICON_PATH, self.icon)])
 
-def _get_style(name, bold=False):
-    key = 'bold' if bold else 'regular'
-    try:
-        return _AVAILABLE_FONTS[key][name]
-    except KeyError:
-        LOG.warning('There is no matching font for name "%s" for style %s.',
-                    name, key)
-        return None
+        if self._exec:
+            args.extend(['-exec', self._exec])
 
+        return args
 
-def _get_font_list(ff_list, size, bold=False):
-    fonts = []
-    for face in ff_list:
-        style = _get_style(face, bold)
-        if not style:
-            continue
-        fonts.append(_XFT_TEMPLATE % (face, _get_style(face, bold), size))
-    return ','.join(fonts)
+    def _parse_fonts(self, font_string):
+        """
+        Parse potentially provided font list, add additional fonts to it,
+        adjust for possible bitmap font and return a list of Font objects.
+        """
+        # get the copy of affitional fonts
+        font_faces = Urxvt._ADDITIONAL_FONTS[:]
+
+        # find out main font/fonts passed by commandline/env/default
+        if ',' in font_string:
+            f_f = [f.strip() for f in font_string.split(',')]
+            f_f.extend(font_faces)
+            font_faces = f_f
+        else:
+            font_faces.insert(0, font_string)
+
+        if self._bitmap:
+            font_faces.insert(0, DEFAULT_BITMAP)
+
+        # return list of Font objects
+        return [Font(f, self.size) for f in font_faces]
 
 
 def main():
