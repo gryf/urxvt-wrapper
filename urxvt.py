@@ -8,7 +8,6 @@ Consult options below.
 """
 
 import argparse
-import collections
 import os
 import subprocess
 import sys
