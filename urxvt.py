@@ -15,9 +15,21 @@ import sys
 import logging
 
 
-class Logger(object):
+SIZE = os.environ.get('URXVT_SIZE', 14)
+FIXED_SIZE = os.environ.get('URXVT_FIXED_SIZE', 16)
+ICON = os.environ.get('URXVT_ICON', 'tilda.png')
+ICON_PATH = os.environ.get('URXVT_ICON_PATH',
+                           os.path.expanduser('~/.urxvt/icons'))
+DEFAULT_FONT = os.environ.get('URXVT_TTF', 'DejaVuSansMono Nerd Font Mono')
+DEFAULT_BITMAP = os.environ.get('URXVT_BMP', 'Misc Fixed')
+PERLEXT = os.environ.get('URXVT_PERL_EXT',
+                         "url-select,keyboard-select,font-size,color-themes")
+LOG = None
+
+
+class Logger:
     """
-    Logger class with output on console only
+    Simple logger class with output on console only
     """
     def __init__(self, logger_name):
         """
@@ -34,21 +46,16 @@ class Logger(object):
         """
         return self._log
 
-    def set_verbose(self, verbose_level, quiet_level):
+    def set_verbose(self, verbose_level):
         """
         Change verbosity level. Default level is warning.
         """
-        self._log.setLevel(logging.WARNING)
-
-        if quiet_level:
-            self._log.setLevel(logging.ERROR)
-            if quiet_level > 1:
-                self._log.setLevel(logging.CRITICAL)
-
-        if verbose_level:
-            self._log.setLevel(logging.INFO)
-            if verbose_level > 1:
-                self._log.setLevel(logging.DEBUG)
+        ver_map = {0: logging.CRITICAL,
+                   1: logging.ERROR,
+                   2: logging.WARNING,
+                   3: logging.INFO,
+                   4: logging.DEBUG}
+        self._log.setLevel(ver_map.get(verbose_level, ver_map[4]))
 
     def setup_logger(self):
         """
@@ -67,17 +74,6 @@ class Logger(object):
 
 
 LOG = Logger(__name__)()
-
-
-SIZE = os.environ.get('URXVT_SIZE', 14)
-FIXED_SIZE = os.environ.get('URXVT_FIXED_SIZE', 16)
-ICON = os.environ.get('URXVT_ICON', 'tilda.png')
-ICON_PATH = os.environ.get('URXVT_ICON_PATH',
-                           os.path.expanduser('~/.urxvt/icons'))
-DEFAULT_FONT = os.environ.get('URXVT_TTF', 'DejaVuSansMono Nerd Font Mono')
-DEFAULT_BITMAP = os.environ.get('URXVT_BMP', 'Misc Fixed')
-PERLEXT = os.environ.get('URXVT_PERL_EXT',
-                         "url-select,keyboard-select,font-size,color-themes")
 
 # Arbitrary added fonts, that provides symbols, icons, emoji (besides those in
 # Nerd Font)
@@ -181,7 +177,7 @@ def _get_font_list(ff_list, size, bold=False):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('-d', '--default-font', default=DEFAULT_FONT,
+    parser.add_argument('-f', '--default-font', default=DEFAULT_FONT,
                         help='use particular (comma separated) font face(s) '
                         'as default(s) one, should be provided by font name, '
                         'not file name(s), default is "%s"' % DEFAULT_FONT)
@@ -191,29 +187,22 @@ def main():
                         '%s, default "%s"' % (ICON_PATH, ICON))
     parser.add_argument('-t', '--tabbedalt', action='store_true',
                         help='activate tabbedalt extension')
-    parser.add_argument('-s', '--size', default=SIZE, type=int,
-                        help='set scalable forn size, default %s' % SIZE)
-
-    parser.add_argument('-e', '--exec', help='pass exec to urxvt')
     parser.add_argument('-n', '--no-perl', action='store_true',
                         help='no perl extensions')
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("-q", "--quiet", help='please, be quiet. Adding more '
-                       '"q" will decrease verbosity', action="count",
-                       default=0)
-    group.add_argument("-v", "--verbose", help='be verbose. Adding more "v" '
-                       'will increase verbosity', action="count", default=0)
+    parser.add_argument('-s', '--size', default=SIZE, type=int,
+                        help='set scalable forn size, default %s' % SIZE)
+    parser.add_argument('-e', '--execute', default=None,
+                        help='pass exec to urxvt')
+    parser.add_argument("-v", "--verbose", help='be verbose. Adding more "v" '
+                        'will increase verbosity', action="count", default=0)
 
     args = parser.parse_args()
+
+    LOG.set_verbose(args.verbose)
 
     command = ['urxvt']
     command.extend(['-icon', os.path.join(os.path.expanduser(ICON_PATH),
                                           args.icon)])
-
-    global LOG
-    log = Logger(__name__)
-    log.set_verbose(args.verbose, args.quiet)
-    LOG = log()
 
     if not args.no_perl:
         command.append('-pe')
