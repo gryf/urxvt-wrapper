@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Wrapper for launchin urxvt terminal emulator. It supports automatically
+Wrapper for launching URXVT terminal emulator. It supports automatically
 generated font list for normal and bold typefaces, setting up bitmap font as a
 main one, selecting an icon and so on.
 
@@ -77,11 +77,10 @@ LOG = Logger(__name__)()
 
 class Font:
     """
-    Represents font object, which as it repr will be a string, like
+    Represents font object, which can produce valid XFT strings for provided
+    fonts as it's attributes - bold and regular.
+
     xft:font name:style=somestyle:pixelsize=12
-
-    It might be seen in two variants: regular and bold.
-
     """
 
     XFT_TEMPLATE = 'xft:%s:style=%s:pixelsize=%d'
@@ -128,8 +127,10 @@ class Font:
         Font style depends on the particular font, and can be one of case
         insensitive: regular, normal, book, medium.
 
-        Technicly, medium style should be semi-bold or bold, but there is at
-        least one font face which treats medium style as regular one.
+        Technically, medium style should be semi-bold or bold, but there is at
+        least one font face which treats medium style as regular one. It is
+        placed as a last resort, and choice for particular font face is left
+        to the user.
         """
         if self._regular is not None:
             return self._regular
@@ -157,13 +158,24 @@ class Font:
             filename2: font_name2,font_name3:style=style1,style2
             filename3: font_name4:style=style3,style4
 
-        Return a dictionary of styles associated to the font name, i.e.:
+        Information about fonts will be stored as a class variable
+        _AVAILABLE_FONTS within two dictionaries: bold and regular, stored in
+        corresponding keys in mentioned dict. _AVAILABLE_FONTS will have a
+        format:
 
-            {font_name1: (style),
-             font_name2: (style1, style2),
-             font_name3: (style1, style2),
-             font_name4: (style3, style4)}
+            {'bold': {'font name': 'Bold',
+                      'font name3': 'bold'},
+             'regular': {'font_name1': 'Regular',
+                         'font_name2': 'Medium',
+                         'font_name3': 'Normal'}}
 
+        As for regular/normal/book/medium styles, whatever style is available
+        for given font, it will be chosen, as ordered in _REGULAR list
+        whichever matches first.
+
+        Note, that fc-list and all the parsing is done once, per running this
+        script, regardless of font faces passed by -f option or those defined
+        in ADDITIONAL_FONTS.
         """
         if Font._AVAILABLE_FONTS:
             return
@@ -221,7 +233,7 @@ class Font:
 
 class Urxvt:
     """
-    Runner for the urxvt
+    Runner for the URXVT
     """
     # Arbitrary added fonts, that provides symbols, icons, emoji (besides
     # those in defualt font)
@@ -241,6 +253,7 @@ class Urxvt:
         self._validate()
 
     def run(self):
+        """Run terminal emulator"""
         args = self._make_command_args()
 
         LOG.info('%s', args)
@@ -258,7 +271,7 @@ class Urxvt:
                 self.perl_extensions = 'tabbedalt,' + PERLEXT
 
     def _validate(self):
-        # vaildate fonts
+        # validate fonts
         for font in self.fonts:
             if not any((font.regular, font.bold)):
                 LOG.error('Font %s seems to be unusable or nonexistent.',
@@ -285,8 +298,8 @@ class Urxvt:
         Parse potentially provided font list, add additional fonts to it,
         adjust for possible bitmap font and return a list of Font objects.
         """
-        # get the copy of affitional fonts
-        font_faces = Urxvt._ADDITIONAL_FONTS[:]
+        # get the copy of additional fonts
+        font_faces = ADDITIONAL_FONTS[:]
 
         # find out main font/fonts passed by commandline/env/default
         if ',' in font_string:
@@ -310,7 +323,7 @@ def main():
                         'as default(s) one, should be provided by font name, '
                         'not file name(s), default is "%s"' % DEFAULT_FONT)
     parser.add_argument('-b', '--bitmap', action='store_true', help='use '
-                        'bitmap font in addition to scalable defined above')
+                        'bitmap font prior to scalable defined above')
     parser.add_argument('-i', '--icon', default=ICON, help='select icon from '
                         '%s, default "%s"' % (ICON_PATH, ICON))
     parser.add_argument('-t', '--tabbedalt', action='store_true',
