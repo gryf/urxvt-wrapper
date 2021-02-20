@@ -16,16 +16,15 @@ import logging
 
 RUN_DIRECT = os.environ.get('URXVT_RUN_DIRECT', False)
 SIZE = os.environ.get('URXVT_SIZE', 14)
-ICON = os.environ.get('URXVT_ICON', 'tilda.png')
+ICON = os.environ.get('URXVT_ICON', '')
 ICON_PATH = os.environ.get('URXVT_ICON_PATH',
                            os.path.expanduser('~/.urxvt/icons'))
-DEFAULT_FONT = os.environ.get('URXVT_TTF', 'DejaVuSansMono Nerd Font Mono')
-DEFAULT_BITMAP = os.environ.get('URXVT_BMP', 'Misc Fixed')
+DEFAULT_FONT = os.environ.get('URXVT_TTF', '')
+DEFAULT_BITMAP = os.environ.get('URXVT_BMP', '')
 PERLEXT = os.environ.get('URXVT_PERL_EXT',
                          "url-select,keyboard-select,font-size,color-themes")
 # Arbitrary added fonts, that provides symbols, icons, emoji (besides those
 # in default font)
-# TODO: make it adjustable by env variable.
 ADDITIONAL_FONTS = ['Symbola', 'Unifont Upper', 'DejaVu Sans']
 
 LOG = None
@@ -304,10 +303,14 @@ class Urxvt:
         args = []
 
         args.extend(['-pe', self.perl_extensions])
-        args.extend(['-fn',
-                     ','.join([f.regular for f in self.fonts if f.regular])])
-        args.extend(['-fb', ','.join([f.bold for f in self.fonts if f.bold])])
-        args.extend(['-icon', os.path.join(ICON_PATH, self.icon)])
+        regular = ','.join([f.regular for f in self.fonts if f.regular])
+        if regular:
+            args.extend(['-fn', regular])
+        bold = ','.join([f.bold for f in self.fonts if f.bold])
+        if bold:
+            args.extend(['-fb', bold])
+        if os.path.exists(os.path.join(ICON_PATH, self.icon)):
+            args.extend(['-icon', os.path.join(ICON_PATH, self.icon)])
 
         if self._exec:
             args.extend(['-e', self._exec])
@@ -346,7 +349,7 @@ def main():
     parser.add_argument('-b', '--bitmap', action='store_true', help='use '
                         'bitmap font prior to scalable defined above')
     parser.add_argument('-i', '--icon', default=ICON, help='select icon from '
-                        '%s, default "%s"' % (ICON_PATH, ICON))
+                        '%s."' % ICON_PATH)
     parser.add_argument('-t', '--tabbedalt', action='store_true',
                         help='activate tabbedalt extension')
     parser.add_argument('-n', '--no-perl', action='store_true',
