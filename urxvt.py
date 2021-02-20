@@ -265,7 +265,9 @@ class Urxvt:
         # additional fonts
         self.fonts = self._parse_fonts(args.default_font)
 
-        if not args.no_perl:
+        if args.no_perl:
+            self.perl_extensions = ''
+        else:
             self.perl_extensions = PERLEXT
             if args.tabbedalt:
                 self.perl_extensions = 'tabbedalt,' + PERLEXT
@@ -280,16 +282,14 @@ class Urxvt:
     def _make_command_args(self):
         args = []
 
-        if self.perl_extensions:
-            args.extend(['-pe', self.perl_extensions])
-
+        args.extend(['-pe', self.perl_extensions])
         args.extend(['-fn',
                      ','.join([f.regular for f in self.fonts if f.regular])])
         args.extend(['-fb', ','.join([f.bold for f in self.fonts if f.bold])])
         args.extend(['-icon', os.path.join(ICON_PATH, self.icon)])
 
         if self._exec:
-            args.extend(['-exec', self._exec])
+            args.extend(['-e', self._exec])
 
         return args
 
