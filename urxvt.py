@@ -14,8 +14,8 @@ import sys
 import logging
 
 
+RUN_DIRECT = os.environ.get('URXVT_RUN_DIRECT', False)
 SIZE = os.environ.get('URXVT_SIZE', 14)
-FIXED_SIZE = os.environ.get('URXVT_FIXED_SIZE', 16)
 ICON = os.environ.get('URXVT_ICON', 'tilda.png')
 ICON_PATH = os.environ.get('URXVT_ICON_PATH',
                            os.path.expanduser('~/.urxvt/icons'))
@@ -23,6 +23,11 @@ DEFAULT_FONT = os.environ.get('URXVT_TTF', 'DejaVuSansMono Nerd Font Mono')
 DEFAULT_BITMAP = os.environ.get('URXVT_BMP', 'Misc Fixed')
 PERLEXT = os.environ.get('URXVT_PERL_EXT',
                          "url-select,keyboard-select,font-size,color-themes")
+# Arbitrary added fonts, that provides symbols, icons, emoji (besides those
+# in default font)
+# TODO: make it adjustable by env variable.
+ADDITIONAL_FONTS = ['Symbola', 'Unifont Upper', 'DejaVu Sans']
+
 LOG = None
 
 
@@ -85,6 +90,7 @@ class Font:
 
     XFT_TEMPLATE = 'xft:%s:style=%s:pixelsize=%d'
 
+    # TODO: do we need italic/bolditalic?
     _REGULAR = ['regular', 'normal', 'book', 'medium']
     _BOLD = ['bold']
     _AVAILABLE_FONTS = {}
@@ -235,9 +241,6 @@ class Urxvt:
     """
     Runner for the URXVT
     """
-    # Arbitrary added fonts, that provides symbols, icons, emoji (besides
-    # those in defualt font)
-    _ADDITIONAL_FONTS = ['Symbola', 'Unifont Upper', 'DejaVu Sans']
 
     def __init__(self, args):
         self.size = args.size
@@ -255,10 +258,28 @@ class Urxvt:
     def run(self):
         """Run terminal emulator"""
         args = self._make_command_args()
+        LOG.info('Arguments to be passed: %s', ' '.join(args))
+        if RUN_DIRECT:
+            self._run_urxvt(args)
+        else:
+            self._run_client_server(args)
 
-        LOG.info('%s', args)
-        # subprocess.run(command)
+    def _run_client_server(self, args):
+        """Utilize urxvt client/daemon mode"""
+        command = ['urxvtc']
+        command.extend(args)
+        process = subprocess.run(command)
+
+        if process.returncode == 2:
+            subprocess.run(['urxvtd', '-q', '-o', 'f'])
+            subprocess.run(command)
+
+    def _run_urxvt(self, args):
+        """Simply pass args to urxvt executable."""
+        command = ['urxvt']
+        command.extend(args)
         # LOG.info('%s', command)
+        subprocess.run(command)
 
     def _setup(self, args):
         # it could be a list or a single font, it will be combined with
