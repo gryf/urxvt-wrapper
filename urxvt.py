@@ -271,7 +271,7 @@ class Urxvt:
         process = subprocess.run(command)
 
         if process.returncode == 2:
-            subprocess.run(['urxvtd', '-q', '-o', 'f'])
+            subprocess.run(['urxvtd', '-q', '-o', '-f'])
             subprocess.run(command)
 
     def _run_urxvt(self, args):
