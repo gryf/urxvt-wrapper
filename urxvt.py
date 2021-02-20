@@ -250,6 +250,7 @@ class Urxvt:
         self._bitmap = args.bitmap
         self._icon_path = ICON_PATH
         self._exec = args.execute
+        self._rxvt_args = None
 
         self._setup(args)
         self._validate()
@@ -292,6 +293,9 @@ class Urxvt:
             if args.tabbedalt:
                 self.perl_extensions = 'tabbedalt,' + PERLEXT
 
+        if args.rxvt_args:
+            self._rxvt_args = args.rxvt_args
+
     def _validate(self):
         # validate fonts
         for font in self.fonts:
@@ -314,6 +318,9 @@ class Urxvt:
 
         if self._exec:
             args.extend(['-e', self._exec])
+
+        if self._rxvt_args:
+            args.extend(self._rxvt_args)
 
         return args
 
@@ -360,6 +367,7 @@ def main():
                         help='pass exec to urxvt')
     parser.add_argument("-v", "--verbose", help='be verbose. Adding more "v" '
                         'will increase verbosity', action="count", default=0)
+    parser.add_argument("rxvt_args", nargs='*')
 
     args = parser.parse_args()
 
