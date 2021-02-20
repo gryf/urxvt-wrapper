@@ -313,7 +313,7 @@ class Urxvt:
         bold = ','.join([f.bold for f in self.fonts if f.bold])
         if bold:
             args.extend(['-fb', bold])
-        if os.path.exists(os.path.join(ICON_PATH, self.icon)):
+        if self.icon and os.path.exists(os.path.join(ICON_PATH, self.icon)):
             args.extend(['-icon', os.path.join(ICON_PATH, self.icon)])
 
         if self._exec:
