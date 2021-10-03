@@ -14,7 +14,7 @@ import sys
 import logging
 
 
-RUN_DIRECT = os.environ.get('URXVT_RUN_DIRECT', False)
+RUN_DAEMON = os.environ.get('URXVT_RUN_DAEMON', False)
 SIZE = os.environ.get('URXVT_SIZE', 14)
 ICON = os.environ.get('URXVT_ICON', '')
 ICON_PATH = os.environ.get('URXVT_ICON_PATH',
@@ -25,7 +25,8 @@ PERLEXT = os.environ.get('URXVT_PERL_EXT',
                          "url-select,keyboard-select,font-size,color-themes")
 # Arbitrary added fonts, that provides symbols, icons, emoji (besides those
 # in default font)
-ADDITIONAL_FONTS = ['Symbola', 'Unifont Upper', 'DejaVu Sans']
+ADDITIONAL_FONTS = ['Noto Color Emoji', 'Symbola', 'Unifont Upper',
+                    'DejaVu Sans']
 
 LOG = None
 
@@ -251,6 +252,7 @@ class Urxvt:
         self._icon_path = ICON_PATH
         self._exec = args.execute
         self._rxvt_args = None
+        self._run_daemon = args.run_daemon or RUN_DAEMON
 
         self._setup(args)
         self._validate()
@@ -259,10 +261,10 @@ class Urxvt:
         """Run terminal emulator"""
         args = self._make_command_args()
         LOG.info('Arguments to be passed: %s', ' '.join(args))
-        if RUN_DIRECT:
-            self._run_urxvt(args)
-        else:
+        if self._run_daemon:
             self._run_client_server(args)
+        else:
+            self._run_urxvt(args)
 
     def _run_client_server(self, args):
         """Utilize urxvt client/daemon mode"""
@@ -349,22 +351,24 @@ class Urxvt:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-b', '--bitmap', action='store_true', help='use '
+                        'bitmap font prior to scalable defined above')
+    parser.add_argument('-d', '--run-daemon', action='store_false',
+                        help='run urxvt in client-server mode')
+    parser.add_argument('-e', '--execute', default=None,
+                        help='pass exec to urxvt')
     parser.add_argument('-f', '--default-font', default=DEFAULT_FONT,
                         help='use particular (comma separated) font face(s) '
                         'as default(s) one, should be provided by font name, '
                         'not file name(s), default is "%s"' % DEFAULT_FONT)
-    parser.add_argument('-b', '--bitmap', action='store_true', help='use '
-                        'bitmap font prior to scalable defined above')
     parser.add_argument('-i', '--icon', default=ICON, help='select icon from '
                         '%s."' % ICON_PATH)
-    parser.add_argument('-t', '--tabbedalt', action='store_true',
-                        help='activate tabbedalt extension')
     parser.add_argument('-n', '--no-perl', action='store_true',
                         help='no perl extensions')
     parser.add_argument('-s', '--size', default=SIZE, type=int,
                         help='set scalable forn size, default %s' % SIZE)
-    parser.add_argument('-e', '--execute', default=None,
-                        help='pass exec to urxvt')
+    parser.add_argument('-t', '--tabbedalt', action='store_true',
+                        help='activate tabbedalt extension')
     parser.add_argument("-v", "--verbose", help='be verbose. Adding more "v" '
                         'will increase verbosity', action="count", default=0)
     parser.add_argument("rxvt_args", nargs='*')
